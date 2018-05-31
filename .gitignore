@@ -1,9 +1,20 @@
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
+# Build directory
+/*[Bb]uild*/
+
+# IDE/Editor project files
+.idea/
+.vs/
+.vscode/
+
+# Linux global filetypes
+.directory
+
+# OSX global filetypes
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows global filetypes
+Thumbs.db
