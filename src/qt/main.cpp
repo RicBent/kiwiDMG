@@ -1,17 +1,15 @@
 #include <QtWidgets>
 
-#include "core/test.h"
+#include "core/dmg.h"
 
 int main(int argc, char** argv)
 {
-    QApplication app(argc, argv);
+    DMG dmg;
+    dmg.reset();
+    dmg.run();
 
-    QMessageBox::information(nullptr, "kiwiDMG", core::test());
+    return 0;
 
-    QMainWindow window;
-    window.setWindowTitle("kiwiDMG");
-    window.setCentralWidget(new QLabel("Hello, World!"));
-    window.show();
-
-    return app.exec();
+    /*QApplication app(argc, argv);
+    return app.exec();*/
 }
