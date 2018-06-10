@@ -2,6 +2,6 @@ include_directories(.)
 
 add_subdirectory(core)
 
-if (ENABLE_QT)
-    add_subdirectory(qt)
+if (ENABLE_GLFW)
+    add_subdirectory(glfw)
 endif()

@@ -1,33 +1,49 @@
 #include "dmg.h"
 
-#include "cpu.h"
-#include "mmu.h"
-
 #include <cstdio>
 
 DMG::DMG()
 {
     mmu = new MMU();
     cpu = new CPU(mmu);
-    mmu->setComponents(cpu);
+    ppu = new PPU(mmu);
+
+    mmu->setComponents(cpu, ppu);
 }
 
 DMG::~DMG()
 {
+    delete ppu;
     delete cpu;
     delete mmu;
 }
 
 void DMG::reset()
 {
+    mmu->reset();
     cpu->reset();
+    ppu->reset();
 }
 
-void DMG::run()
+void DMG::runToVBlank()
 {
-    while (!cpu->debug)
-        cpu->tick();
+    while (true)
+    {
+        if (cpu->debugBreak)
+            break;
 
-    printf("--------------------------------\n");
-    cpu->printStatus();
+        u8 cycles = cpu->tick();
+
+        if (cpu->debugBreak)
+        {
+            printf("------------------------\n");
+            cpu->printStatus();
+            break;
+        }
+
+        bool vblank = ppu->tick(cycles);
+
+        if (vblank)
+            break;
+    }
 }

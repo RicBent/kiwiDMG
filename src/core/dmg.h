@@ -1,18 +1,20 @@
 #pragma once
 
-class CPU;
-class MMU;
+#include "cpu.h"
+#include "ppu.h"
 
-class DMG
+struct DMG
 {
-public:
     DMG();
     ~DMG();
 
     void reset();
-    void run();
+    void runToVBlank();
 
-private:
-    CPU* cpu;
+    // TODO: Remove
+    u8* getFrame() { return ppu->framebuffer; }
+
     MMU* mmu;
+    CPU* cpu;
+    PPU* ppu;
 };

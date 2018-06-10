@@ -1,8 +1,9 @@
 #pragma once
 
-#include "types.h"
+#include "cartridge.h"
 
 struct CPU;
+struct PPU;
 
 // TODO: Convert to class
 
@@ -11,10 +12,14 @@ struct MMU
     MMU();
     ~MMU();
 
-    void setComponents(CPU* cpu);
+    void setComponents(CPU* cpu, PPU* ppu);
+    void reset();
 
     bool loadBios(const char* path);
     void unloadBios();
+
+    bool loadCartridge(const char* path);
+    void unloadCartridge();
 
     u8 read8(u16 addr);
     u16 read16(u16 addr);
@@ -24,6 +29,7 @@ struct MMU
 
 
     CPU* cpu;
+    PPU* ppu;
 
     // ROM Bank 0       // 0000-3FFF
     // ROM Banks 1-n    // 4000-7FFF
@@ -33,10 +39,20 @@ struct MMU
     // Echo RAM         // E000-FDFF
     u8 oam[0xA0];       // FE00-FE9F
     // Unusable         // FEA0-FEFF
-    u8 io[0x80];        // FF00-FF7F
+    // IO               // FF00-FF7F
     u8 hram[0x80];      // FF80-FFFE
 
     bool biosLoaded;
     u8* bios;
     u32 biosSize;
+
+    bool biosLocked;
+
+
+    bool cartridgeLoaded;
+    Cartridge* cartridge;
+
+
+    u8 readIO(u16 addr);
+    void writeIO(u16 addr, u8 val);
 };

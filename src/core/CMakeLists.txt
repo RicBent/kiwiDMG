@@ -9,4 +9,9 @@ add_library(core STATIC
         cpu_opcodes.cpp
         cpu_instinfo.cpp
         cpu_instrinfo_cb.cpp
-)
+        ppu.cpp
+        ppu.h
+        cartridge.cpp
+        cartridge.h
+        mbc.cpp
+        mbc.h)
