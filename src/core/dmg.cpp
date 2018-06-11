@@ -6,7 +6,7 @@ DMG::DMG()
 {
     mmu = new MMU();
     cpu = new CPU(mmu);
-    ppu = new PPU(mmu);
+    ppu = new PPU(mmu, cpu);
 
     mmu->setComponents(cpu, ppu);
 }

@@ -262,6 +262,12 @@ void CPU::op_ret(bool cond)
     op_ret();
 }
 
+void CPU::op_reti()
+{
+    ime = true;
+    op_ret();
+}
+
 void CPU::op_pop(u16& reg)
 {
     reg = readStack16();
@@ -306,6 +312,16 @@ void CPU::op_ld_sp_r8()
     f_set(FLAG_C, ((regs.sp ^ r8 ^ (result & 0xFFFF)) & 0x100) == 0x100);
 
     regs.hl = static_cast<u16>(result);
+}
+
+void CPU::op_ei()
+{
+    ime = true;
+}
+
+void CPU::op_di()
+{
+    ime = false;
 }
 
 

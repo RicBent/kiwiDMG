@@ -11,6 +11,9 @@ void CPU::reset()
 {
     debugBreak = false;
     regs.pc = 0;
+    ime = false;    // TODO: Check
+    ie = 0;
+    iflags = 0;
 }
 
 
@@ -33,6 +36,20 @@ u8 CPU::tick()
 {
     cycles = 0;
 
+    // Interrupt step
+    if (ime)
+    {
+        u8 fired = ie & iflags;
+
+        if (fired & INTERR_VBLANK)
+        {
+            iflags &= ~INTERR_VBLANK;
+            ime = false;
+            op_rst(0x40);
+            cycles += 0x20;
+        }
+    }
+
     // Fetch Opcode
     pc_b = regs.pc;
     u8 opcode = mmu->read8(regs.pc);
@@ -40,11 +57,6 @@ u8 CPU::tick()
     // Execute
     switch (opcode)
     {
-        // Hacks
-        INSTR(0xF3, op_nop()); // DI
-        INSTR(0xFB, op_nop()); // EI
-        INSTR(0xD9, op_ret()); // RETI
-
         // NOP
         INSTR(0x00, op_nop());
 
@@ -371,6 +383,9 @@ u8 CPU::tick()
         INSTR(0xD0, op_ret(!f_is(FLAG_C)));
         INSTR(0xD8, op_ret(f_is(FLAG_C)));
 
+        // RETI
+        INSTR(0xD9, op_reti());
+
         // POP
         INSTR(0xC1, op_pop(regs.bc));
         INSTR(0xD1, op_pop(regs.de));
@@ -398,6 +413,12 @@ u8 CPU::tick()
 
         // LD HL,SP+r8
         INSTR(0xF8, op_ld_sp_r8());
+
+        // DI
+        INSTR(0xF3, op_di());
+
+        // EI
+        INSTR(0xFB, op_ei());
 
 
         case 0xCB:

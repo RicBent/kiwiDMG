@@ -9,7 +9,7 @@ struct PPU
     static const u16 LCD_WIDTH = 160;
     static const u16 LCD_HEIGHT = 144;
 
-    PPU(MMU* muu);
+    PPU(MMU* muu, CPU* cpu);
 
     void reset();
     bool tick(u8 cycles);
@@ -37,6 +37,7 @@ struct PPU
 
 
     MMU* mmu;
+    CPU* cpu;
 
 
     void renderScanline();

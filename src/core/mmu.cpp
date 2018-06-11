@@ -112,6 +112,9 @@ u8 MMU::read8(u16 addr)
     if (addr >= 0xFF80 && addr <= 0xFFFE)
         return hram[addr - 0xFF80];
 
+    if (addr == 0xFFFF)
+        return cpu->ie;
+
     printf("Unknown memory read: 0x%04X PC: %04x\n", addr, cpu->pc_b);
     return 0xFF;
 }
@@ -129,11 +132,17 @@ void MMU::write8(u16 addr, u8 val)
     else if (addr >= 0xC000 && addr <= 0xDFFF)
         wram[addr - 0xC000] = val;
 
+    else if (addr >= 0xFE00 && addr <= 0xFE9F)
+        oam[addr & 0xFF] = val;
+
     else if (addr >= 0xFF00 && addr <= 0xFF7F)
         writeIO(addr, val);
 
     else if (addr >= 0xFF80 && addr <= 0xFFFE)
         hram[addr - 0xFF80] = val;
+
+    else if (addr == 0xFFFF)
+        cpu->ie = val;
 
     else
         printf("Unknown memory write: 0x%04X 0x%02X PC: %04x\n", addr, val, cpu->pc_b);
@@ -149,6 +158,8 @@ u8 MMU::readIO(u16 addr)
 {
     switch (addr)
     {
+    case 0xFF0F:
+        return cpu->iflags;
     case 0xFF42:
         return  ppu->scrollY;
     case 0xFF43:
@@ -168,6 +179,8 @@ void MMU::writeIO(u16 addr, u8 val)
 {
     switch (addr)
     {
+    case 0xFF0F:
+        cpu->iflags = val; break;
     case 0xFF42:
         ppu->scrollY = val; break;
     case 0xFF43:

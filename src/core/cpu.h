@@ -20,6 +20,8 @@ struct CPU
     u8 tick();
     void printStatus();
 
+    MMU* mmu;
+
     bool debugBreak = false;
 
     // Registers
@@ -38,6 +40,8 @@ struct CPU
     // PC before fetching instruction
     u16 pc_b;
 
+
+    // Status Flags
     enum Flag
     {
         FLAG_Z = 1 << 7,    // Zero
@@ -46,17 +50,30 @@ struct CPU
         FLAG_C = 1 << 4,    // Carry
     };
 
-    // Flag helpers
     bool f_is(u8 f);
     void f_set(u8 f);
     void f_clear(u8 f);
     void f_set(u8 f, bool val);
     void f_clear();
 
+
+    // Interrupts
+    bool ime;      // Master Enable
+    u8 ie;         // Regular Enable
+    u8 iflags;     // Flags
+
+    enum Interrupt
+    {
+        INTERR_VBLANK  = 1 << 0,
+        INTERR_LCDSTAT = 1 << 1,
+        INTERR_TIMER   = 1 << 2,
+        INTERR_SERIAL  = 1 << 3,
+        INTERR_JOYPAD  = 1 << 4,
+    };
+
+
     // Cycles of current instruction
     u8 cycles;
-
-    MMU* mmu;
 
 
     // Instruction info tables
@@ -80,6 +97,7 @@ struct CPU
 
     u16 readStack16();
     void writeStack16(u16 val);
+
 
     // Opcodes
     void op_nop();
@@ -115,12 +133,15 @@ struct CPU
     void op_call(bool cond);
     void op_ret();
     void op_ret(bool cond);
+    void op_reti();
     void op_pop(u16& reg);
     void op_pop_af();
     void op_push(u16 val);
     void op_rst(u8 addr);
     void op_add_sp_r8();
     void op_ld_sp_r8();
+    void op_ei();
+    void op_di();
 
     // Opcodes (CB prefixed)
     void op_rlc(u8& reg, bool rlca = false);

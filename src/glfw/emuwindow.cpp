@@ -104,8 +104,10 @@ void EmuWindow::update()
     {
         for (int x = 0; x < 160; x++)
         {
-            uint8_t c = 255 - (dmg.getFrame()[y*160 + x] * 85);
-            frameData[y*160 + x] = 0xFF000000 | c << 16 | c << 8 | c;
+            uint32_t palette[4] = {0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000};
+
+            uint32_t c = palette[dmg.getFrame()[y*160 + x]];
+            frameData[y*160 + x] = c;
         }
     }
 }

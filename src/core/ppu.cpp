@@ -1,7 +1,8 @@
 #include "ppu.h"
+#include "cpu.h"
 
-PPU::PPU(MMU* mmu) :
-    mmu(mmu)
+PPU::PPU(MMU* mmu, CPU* cpu) :
+    mmu(mmu), cpu(cpu)
 {
 
 }
@@ -32,6 +33,7 @@ bool PPU::tick(u8 cycles)
             if (scanline >= 144)
             {
                 state = State_VBlank;
+                cpu->iflags |= CPU::INTERR_VBLANK;
                 enteringVBlank = true;
             }
             else
