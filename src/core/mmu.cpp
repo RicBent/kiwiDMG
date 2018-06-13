@@ -1,7 +1,9 @@
 #include "mmu.h"
 #include "cpu.h"
 #include "ppu.h"
+
 #include <cstdio>
+#include <cstring>
 
 MMU::MMU() :
     biosLoaded(false), cartridgeLoaded(false)
@@ -160,14 +162,20 @@ u8 MMU::readIO(u16 addr)
     {
     case 0xFF0F:
         return cpu->iflags;
+    case 0xFF40:
+        return ppu->lcdControl;
     case 0xFF42:
-        return  ppu->scrollY;
+        return ppu->scrollY;
     case 0xFF43:
-        return  ppu->scrollX;
-    case 0xFF44:    // TODO: Return 0 if screen disabled
+        return ppu->scrollX;
+    case 0xFF44:    // TODO: Return 0 if screen disabled? Writing resets the counter
         return ppu->scanline;
-    case 0xFF47:    // TODO: Check of this returns anything
-        return  ppu->bgPalette;
+    case 0xFF47:    // TODO: Check if this returns anything
+        return ppu->bgPalette;
+    case 0xFF48:    // TODO: Check if this returns anything
+        return ppu->objPalette1;
+    case 0xFF49:    // TODO: Check if this returns anything
+        return ppu->objPalette2;
 
     default:
         printf("Unknown IO read: 0x%04X PC: %04x\n", addr, cpu->pc_b);
@@ -181,12 +189,20 @@ void MMU::writeIO(u16 addr, u8 val)
     {
     case 0xFF0F:
         cpu->iflags = val; break;
+    case 0xFF40:
+        ppu->lcdControl = val; break;
     case 0xFF42:
         ppu->scrollY = val; break;
     case 0xFF43:
         ppu->scrollX = val; break;
+    case 0xFF46:
+        performDMA(val); break;
     case 0xFF47:
         ppu->bgPalette = val; break;
+    case 0xFF48:
+        ppu->objPalette1 = val; break;
+    case 0xFF49:
+        ppu->objPalette2 = val; break;
     case 0xFF50:    // TODO: Check read result
         if (val) biosLocked = true; break;
 
@@ -194,4 +210,14 @@ void MMU::writeIO(u16 addr, u8 val)
         printf("Unknown IO write: 0x%04X 0x%02X PC: %04x\n", addr, val, cpu->pc_b);
         break;
     }
+}
+
+void MMU::performDMA(u8 val)
+{
+    // TODO: Not accurate: transfer takes 160 us, CPU only has HRAM access during that
+
+    u16 src = val << 8;
+
+    for (int i = 0; i < 0xA0; i++)
+        oam[i] = read8(src + i);
 }

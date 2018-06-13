@@ -27,7 +27,6 @@ struct MMU
     void write8(u16 addr, u8 val);
     void write16(u16 addr, u16 val);
 
-
     CPU* cpu;
     PPU* ppu;
 
@@ -55,4 +54,6 @@ struct MMU
 
     u8 readIO(u16 addr);
     void writeIO(u16 addr, u8 val);
+
+    void performDMA(u8 val);
 };

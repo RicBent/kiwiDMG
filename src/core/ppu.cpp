@@ -76,49 +76,124 @@ bool PPU::tick(u8 cycles)
     return enteringVBlank;
 }
 
+
+#include <iostream>
+
 void PPU::renderScanline()
 {
-    u16 mapAddr   = 0x1800;     // TODO: 9800 or 9C00
-    u16 tilesAddr = 0x0000;     // TODO: 8000 or 8800
+    // Render BG Map
 
-    u16 mapX, mapY, mapIdx;
-    mapY = ((scrollY + scanline) / 8) % 0x20;
-    mapX = scrollX / 8;
+    // TODO: Tile flipping
+    // TODO: Map Select
 
-    u8 tileX, tileY;
-    tileX = scrollX % 8;
-    tileY = (scrollY + scanline) % 8;
-
-    u8 drawX = 0;
-    while (true)
+    if (lcdControl & LCDC_BG_WINDOW_DISPLAY)
     {
-        mapX %= 0x20;
-        mapIdx = mapY * 0x20 + mapX;
+        u16 mapAddr = 0x1800;     // TODO: 9800 or 9C00
 
-        u8 tileId = mmu->vram[mapAddr + mapIdx];    // TODO: s8 if tileAddr = 8800
+        u16 mapX, mapY, mapIdx;
+        mapY = ((scrollY + scanline) / 8) % 0x20;
+        mapX = scrollX / 8;
 
-        u16 tileAddr = tilesAddr + tileId * 16 + tileY * 2;
+        u8 tileX, tileY;
+        tileX = scrollX % 8;
+        tileY = (scrollY + scanline) % 8;
 
-        u8 tileLo = mmu->vram[tileAddr];
-        u8 tileHi = mmu->vram[tileAddr + 1];
-
-        for (tileX; tileX < 8; tileX++)
+        u8 drawX = 0;
+        while (true)
         {
-            u8 palIdx = ((tileLo & 0x80) | ((tileHi & 0x80) << 1)) >> 7;
-            GbColor c = (bgPalette >> (palIdx * 2)) & 3;
+            mapX %= 0x20;
+            mapIdx = mapY * 0x20 + mapX;
 
-            framebuffer[drawX + scanline * LCD_WIDTH] = c;
+            u8 tileId = mmu->vram[mapAddr + mapIdx];
 
-            drawX++;
-            if (drawX >= LCD_WIDTH)
-                return;
+            // LCDC_BG_WINDOW_TILE_SELECT
+            // 0: Tile address 0x9000, signed index
+            // 1: Tile address 0x8000, unsigned index
+            u16 tileAddr;
+            if (lcdControl & LCDC_BG_WINDOW_TILE_SELECT)
+                tileAddr = tileId * 16;
+            else
+                tileAddr = 0x1000 + static_cast<s8>(tileId) * 16;
 
-            tileLo <<= 1;
-            tileHi <<= 1;
+            tileAddr += tileY * 2;
+
+
+            u8 tileLo = mmu->vram[tileAddr];
+            u8 tileHi = mmu->vram[tileAddr + 1];
+
+            tileLo <<= tileX;
+            tileHi <<= tileX;
+            for (tileX; tileX < 8; tileX++)
+            {
+                u8 palIdx = ((tileLo & 0x80) | ((tileHi & 0x80) << 1)) >> 7;
+                GbColor c = (bgPalette >> (palIdx * 2)) & 3;
+
+                framebuffer[drawX + scanline * LCD_WIDTH] = c;
+
+                drawX++;
+                if (drawX >= LCD_WIDTH)
+                    goto renderObjects;
+
+                tileLo <<= 1;
+                tileHi <<= 1;
+            }
+
+            // Next tile
+            tileX = 0;
+            mapX++;
         }
+    }
 
-        // Next tile
-        tileX = 0;
-        mapX++;
+    // Render Objects
+renderObjects:
+
+    // TODO: Priorities (lower x first, same x: lower id)
+    // TODO: 8x16 sprites
+    // TODO: BG Priority
+    // TODO: Tile flipping
+    if (lcdControl & LCDC_OBJ_DISPLAY)
+    {
+        u16 oamAddr = 0;
+        for (int s = 0; s < 40; s++)
+        {
+            s16 y = mmu->oam[oamAddr++] - 0x10;
+            s16 x = mmu->oam[oamAddr++] - 0x08;
+            u8 tileId = mmu->oam[oamAddr++];
+            u8 flags = mmu->oam[oamAddr++];
+
+            if (scanline >= y && scanline < (y + 8))
+            {
+                u16 tileAddr = tileId * 16;
+                tileAddr += (scanline-y) * 2;
+
+                u8 tileLo = mmu->vram[tileAddr];
+                u8 tileHi = mmu->vram[tileAddr + 1];
+
+                u8 pal = (flags & OBJ_PALETTE) ? objPalette2 : objPalette1;
+
+
+                u8 tileX = (x < 0) ? -x : 0;
+                tileLo <<= tileX;
+                tileHi <<= tileX;
+
+                u8 drawX = x + tileX;
+                for (tileX; tileX < 8; tileX++)
+                {
+                    u8 palIdx = (((tileLo & 0x80) | ((tileHi & 0x80) << 1)) >> 7);
+
+                    if (palIdx != 0)
+                    {
+                        GbColor c = (pal >> (palIdx * 2)) & 3;
+                        framebuffer[scanline * LCD_WIDTH + drawX] = c;
+                    }
+
+                    if (++drawX >= LCD_WIDTH)
+                        break;
+
+                    tileLo <<= 1;
+                    tileHi <<= 1;
+                }
+            }
+        }
     }
 }

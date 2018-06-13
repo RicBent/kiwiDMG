@@ -57,6 +57,9 @@ u8 CPU::tick()
     // Execute
     switch (opcode)
     {
+        // HACKS
+        INSTR(0x76, op_nop());  // HALT
+
         // NOP
         INSTR(0x00, op_nop());
 
